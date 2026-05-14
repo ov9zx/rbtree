@@ -1,629 +1,403 @@
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Line2D;
-import java.util.ArrayList;
-import java.util.List;
 
-public class RedBlackTreeVisualization extends JFrame {
-    private RedBlackTree<Integer> tree;
-    private TreePanel treePanel;
-    private JTextField inputField;
-    private JTextArea infoArea;
-    
-    public RedBlackTreeVisualization() {
-        tree = new RedBlackTree<>();
-        initializeUI();
+class RBNode {
+    int data;
+    RBNode parent, left, right;
+    int color; // 1 🔴 (Red), 0 ⚫ (Black)
+
+    public RBNode(int data) {
+        this.data = data;
+        this.color = 1; 
     }
-    
-    private void initializeUI() {
-        setTitle("Red-Black Tree - Visualization");
+}
+
+class RedBlackTree {
+    private RBNode root;
+    private final RBNode TNULL;
+
+    public RedBlackTree() {
+        TNULL = new RBNode(0);
+        TNULL.color = 0;
+        TNULL.left = null;
+        TNULL.right = null;
+        root = TNULL;
+    }
+
+    public RBNode getRoot() {
+        return this.root;
+    }
+
+    public RBNode getTNULL() {
+        return this.TNULL;
+    }
+
+    // 🔍 Search (Поиск)
+    public RBNode searchTree(int k) {
+        return searchTreeHelper(this.root, k);
+    }
+
+    private RBNode searchTreeHelper(RBNode node, int key) {
+        if (node == TNULL || key == node.data) {
+            return node;
+        }
+        if (key < node.data) {
+            return searchTreeHelper(node.left, key);
+        }
+        return searchTreeHelper(node.right, key);
+    }
+
+    // ➕ Insert (Вставка элемента)
+    public void insert(int key) {
+        RBNode node = new RBNode(key);
+        node.parent = null;
+        node.data = key;
+        node.left = TNULL;
+        node.right = TNULL;
+        node.color = 1; // 🔴 New node is always red
+
+        RBNode y = null;
+        RBNode x = this.root;
+
+        while (x != TNULL) {
+            y = x;
+            if (node.data < x.data) {
+                x = x.left;
+            } else {
+                x = x.right;
+            }
+        }
+
+        node.parent = y;
+        if (y == null) {
+            root = node;
+        } else if (node.data < y.data) {
+            y.left = node;
+        } else {
+            y.right = node;
+        }
+
+        if (node.parent == null) {
+            node.color = 0;
+            return;
+        }
+        if (node.parent.parent == null) {
+            return;
+        }
+        insertFix(node);
+    }
+
+    private void insertFix(RBNode k) {
+        RBNode u;
+        while (k.parent.color == 1) {
+            if (k.parent == k.parent.parent.right) {
+                u = k.parent.parent.left;
+                if (u.color == 1) {
+                    u.color = 0;
+                    k.parent.color = 0;
+                    k.parent.parent.color = 1;
+                    k = k.parent.parent;
+                } else {
+                    if (k == k.parent.left) {
+                        k = k.parent;
+                        rightRotate(k);
+                    }
+                    k.parent.color = 0;
+                    k.parent.parent.color = 1;
+                    leftRotate(k.parent.parent);
+                }
+            } else {
+                u = k.parent.parent.right;
+                if (u.color == 1) {
+                    u.color = 0;
+                    k.parent.color = 0;
+                    k.parent.parent.color = 1;
+                    k = k.parent.parent;
+                } else {
+                    if (k == k.parent.right) {
+                        k = k.parent;
+                        leftRotate(k);
+                    }
+                    k.parent.color = 0;
+                    k.parent.parent.color = 1;
+                    rightRotate(k.parent.parent);
+                }
+            }
+            if (k == root) {
+                break;
+            }
+        }
+        root.color = 0;
+    }
+
+    // ➖ Delete (Удаление элемента)
+    public void deleteNode(int data) {
+        deleteNodeHelper(this.root, data);
+    }
+
+    private void deleteNodeHelper(RBNode node, int key) {
+        RBNode z = TNULL;
+        RBNode x, y;
+        while (node != TNULL) {
+            if (node.data == key) {
+                z = node;
+            }
+            if (node.data <= key) {
+                node = node.right;
+            } else {
+                node = node.left;
+            }
+        }
+
+        if (z == TNULL) {
+            return; // Key not found
+        }
+
+        y = z;
+        int yOriginalColor = y.color;
+        if (z.left == TNULL) {
+            x = z.right;
+            rbTransplant(z, z.right);
+        } else if (z.right == TNULL) {
+            x = z.left;
+            rbTransplant(z, z.left);
+        } else {
+            y = minimum(z.right);
+            yOriginalColor = y.color;
+            x = y.right;
+            if (y.parent == z) {
+                x.parent = y;
+            } else {
+                rbTransplant(y, y.right);
+                y.right = z.right;
+                y.right.parent = y;
+            }
+            rbTransplant(z, y);
+            y.left = z.left;
+            y.left.parent = y;
+            y.color = z.color;
+        }
+        if (yOriginalColor == 0) {
+            deleteFix(x);
+        }
+    }
+
+    private void deleteFix(RBNode x) {
+        RBNode s;
+        while (x != root && x.color == 0) {
+            if (x == x.parent.left) {
+                s = x.parent.right;
+                if (s.color == 1) {
+                    s.color = 0;
+                    x.parent.color = 1;
+                    leftRotate(x.parent);
+                    s = x.parent.right;
+                }
+                if (s.left.color == 0 && s.right.color == 0) {
+                    s.color = 1;
+                    x = x.parent;
+                } else {
+                    if (s.right.color == 0) {
+                        s.left.color = 0;
+                        s.color = 1;
+                        rightRotate(s);
+                        s = x.parent.right;
+                    }
+                    s.color = x.parent.color;
+                    x.parent.color = 0;
+                    s.right.color = 0;
+                    leftRotate(x.parent);
+                    x = root;
+                }
+            } else {
+                s = x.parent.left;
+                if (s.color == 1) {
+                    s.color = 0;
+                    x.parent.color = 1;
+                    rightRotate(x.parent);
+                    s = x.parent.left;
+                }
+                if (s.right.color == 0 && s.left.color == 0) {
+                    s.color = 1;
+                    x = x.parent;
+                } else {
+                    if (s.left.color == 0) {
+                        s.right.color = 0;
+                        s.color = 1;
+                        leftRotate(s);
+                        s = x.parent.left;
+                    }
+                    s.color = x.parent.color;
+                    x.parent.color = 0;
+                    s.left.color = 0;
+                    rightRotate(x.parent);
+                    x = root;
+                }
+            }
+        }
+        x.color = 0;
+    }
+
+    private void rbTransplant(RBNode u, RBNode v) {
+        if (u.parent == null) {
+            root = v;
+        } else if (u == u.parent.left) {
+            u.parent.left = v;
+        } else {
+            u.parent.right = v;
+        }
+        v.parent = u.parent;
+    }
+
+    private RBNode minimum(RBNode node) {
+        while (node.left != TNULL) {
+            node = node.left;
+        }
+        return node;
+    }
+
+    private void leftRotate(RBNode x) {
+        RBNode y = x.right;
+        x.right = y.left;
+        if (y.left != TNULL) {
+            y.left.parent = x;
+        }
+        y.parent = x.parent;
+        if (x.parent == null) {
+            this.root = y;
+        } else if (x == x.parent.left) {
+            x.parent.left = y;
+        } else {
+            x.parent.right = y;
+        }
+        y.left = x;
+        x.parent = y;
+    }
+
+    private void rightRotate(RBNode x) {
+        RBNode y = x.left;
+        x.left = y.right;
+        if (y.right != TNULL) {
+            y.right.parent = x;
+        }
+        y.parent = x.parent;
+        if (x.parent == null) {
+            this.root = y;
+        } else if (x == x.parent.right) {
+            x.parent.right = y;
+        } else {
+            x.parent.left = y;
+        }
+        y.right = x;
+        x.parent = y;
+    }
+}
+
+public class RBTVisualizer extends JFrame {
+    private RedBlackTree tree = new RedBlackTree();
+    private TreePanel treePanel = new TreePanel();
+    private JTextField inputField = new JTextField(10);
+    private JLabel statusLabel = new JLabel("Status: Waiting for input...");
+
+    public RBTVisualizer() {
+        setTitle("Red-Black Tree Visualizer 🌳");
+        setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 700);
-        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
+
+        JPanel controlPanel = new JPanel();
+        JButton insertBtn = new JButton("Insert ➕");
+        JButton deleteBtn = new JButton("Delete ➖");
+        JButton searchBtn = new JButton("Search 🔍");
+
+        controlPanel.add(new JLabel("Value:"));
+        controlPanel.add(inputField);
+        controlPanel.add(insertBtn);
+        controlPanel.add(deleteBtn);
+        controlPanel.add(searchBtn);
         
-        // Main panel
-        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        
-        // Tree drawing panel
-        treePanel = new TreePanel();
-        JScrollPane scrollPane = new JScrollPane(treePanel);
-        scrollPane.setPreferredSize(new Dimension(800, 500));
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
-        
-        // Control panel
-        JPanel controlPanel = createControlPanel();
-        mainPanel.add(controlPanel, BorderLayout.SOUTH);
-        
-        // Information panel
-        JPanel infoPanel = createInfoPanel();
-        mainPanel.add(infoPanel, BorderLayout.EAST);
-        
-        add(mainPanel);
-    }
-    
-    private JPanel createControlPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        panel.setBorder(BorderFactory.createTitledBorder("Controls"));
-        
-        // Input field
-        inputField = new JTextField(10);
-        inputField.setFont(new Font("Arial", Font.PLAIN, 14));
-        panel.add(new JLabel("Value:"));
-        panel.add(inputField);
-        
-        // Operation buttons
-        JButton insertButton = createStyledButton("Insert", new Color(46, 139, 87));
-        JButton deleteButton = createStyledButton("Delete", new Color(220, 20, 60));
-        JButton searchButton = createStyledButton("Search", new Color(30, 144, 255));
-        JButton clearButton = createStyledButton("Clear", new Color(128, 128, 128));
-        JButton randomButton = createStyledButton("Random", new Color(255, 140, 0));
-        
-        insertButton.addActionListener(e -> performInsert());
-        deleteButton.addActionListener(e -> performDelete());
-        searchButton.addActionListener(e -> performSearch());
-        clearButton.addActionListener(e -> performClear());
-        randomButton.addActionListener(e -> insertRandom());
-        
-        panel.add(insertButton);
-        panel.add(deleteButton);
-        panel.add(searchButton);
-        panel.add(randomButton);
-        panel.add(clearButton);
-        
-        return panel;
-    }
-    
-    private JPanel createInfoPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setPreferredSize(new Dimension(250, 500));
-        panel.setBorder(BorderFactory.createTitledBorder("Information"));
-        
-        infoArea = new JTextArea();
-        infoArea.setEditable(false);
-        infoArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        infoArea.setBackground(new Color(245, 245, 245));
-        
-        JScrollPane scrollPane = new JScrollPane(infoArea);
-        panel.add(scrollPane, BorderLayout.CENTER);
-        
-        updateInfo();
-        return panel;
-    }
-    
-    private JButton createStyledButton(String text, Color bgColor) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.BOLD, 12));
-        button.setBackground(bgColor);
-        button.setForeground(Color.WHITE);
-        button.setFocusPainted(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return button;
-    }
-    
-    private void performInsert() {
-        try {
-            int value = Integer.parseInt(inputField.getText());
-            if (!tree.contains(value)) {
-                tree.insert(value);
-                updateInfo();
+        add(controlPanel, BorderLayout.NORTH);
+        add(treePanel, BorderLayout.CENTER);
+        add(statusLabel, BorderLayout.SOUTH);
+
+        insertBtn.addActionListener(e -> {
+            try {
+                int val = Integer.parseInt(inputField.getText());
+                tree.insert(val);
+                statusLabel.setText("Status: Inserted " + val + " ✔️");
                 treePanel.repaint();
-                inputField.setText("");
-                JOptionPane.showMessageDialog(this, "Value " + value + " inserted!", 
-                    "Success", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(this, "Value " + value + " already exists!", 
-                    "Warning", JOptionPane.WARNING_MESSAGE);
+            } catch (NumberFormatException ex) {
+                statusLabel.setText("Status: Invalid input ❌");
             }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Please enter an integer!", 
-                "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-    
-    private void performDelete() {
-        try {
-            int value = Integer.parseInt(inputField.getText());
-            if (tree.contains(value)) {
-                tree.delete(value);
-                updateInfo();
+        });
+
+        deleteBtn.addActionListener(e -> {
+            try {
+                int val = Integer.parseInt(inputField.getText());
+                tree.deleteNode(val);
+                statusLabel.setText("Status: Deleted " + val + " ✔️");
                 treePanel.repaint();
-                inputField.setText("");
-                JOptionPane.showMessageDialog(this, "Value " + value + " deleted!", 
-                    "Success", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(this, "Value " + value + " not found!", 
-                    "Error", JOptionPane.ERROR_MESSAGE);
+            } catch (NumberFormatException ex) {
+                statusLabel.setText("Status: Invalid input ❌");
             }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Please enter an integer!", 
-                "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-    
-    private void performSearch() {
-        try {
-            int value = Integer.parseInt(inputField.getText());
-            boolean found = tree.contains(value);
-            treePanel.highlightValue = found ? value : null;
-            treePanel.repaint();
-            
-            if (found) {
-                JOptionPane.showMessageDialog(this, "Value " + value + " found!", 
-                    "Search", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(this, "Value " + value + " not found!", 
-                    "Search", JOptionPane.INFORMATION_MESSAGE);
+        });
+
+        searchBtn.addActionListener(e -> {
+            try {
+                int val = Integer.parseInt(inputField.getText());
+                RBNode result = tree.searchTree(val);
+                if (result != tree.getTNULL()) {
+                    statusLabel.setText("Status: Found " + val + " 🔍");
+                } else {
+                    statusLabel.setText("Status: " + val + " not found ❌");
+                }
+            } catch (NumberFormatException ex) {
+                statusLabel.setText("Status: Invalid input ❌");
             }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Please enter an integer!", 
-                "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        });
     }
-    
-    private void performClear() {
-        tree = new RedBlackTree<>();
-        treePanel.highlightValue = null;
-        updateInfo();
-        treePanel.repaint();
-    }
-    
-    private void insertRandom() {
-        for (int i = 0; i < 7; i++) {
-            int value = (int)(Math.random() * 100);
-            if (!tree.contains(value)) {
-                tree.insert(value);
-            }
-        }
-        updateInfo();
-        treePanel.repaint();
-    }
-    
-    private void updateInfo() {
-        List<Integer> values = tree.inorderTraversalList();
-        infoArea.setText("=== Tree Information ===\n\n");
-        infoArea.append("Number of nodes: " + values.size() + "\n");
-        infoArea.append("Valid RBT: " + (tree.isValidRedBlackTree() ? "Yes" : "No") + "\n\n");
-        infoArea.append("Elements (inorder):\n");
-        
-        for (int i = 0; i < values.size(); i++) {
-            infoArea.append(values.get(i) + " ");
-            if ((i + 1) % 10 == 0) {
-                infoArea.append("\n");
-            }
-        }
-        
-        infoArea.append("\n\nTree height: " + tree.getHeight());
-    }
-    
-    // Tree drawing panel
+
     class TreePanel extends JPanel {
-        public Integer highlightValue = null;
-        private final int NODE_RADIUS = 25;
-        private final int LEVEL_HEIGHT = 80;
-        
-        public TreePanel() {
-            setPreferredSize(new Dimension(800, 600));
-            setBackground(Color.WHITE);
-        }
-        
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            Graphics2D g2d = (Graphics2D) g;
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, 
-                RenderingHints.VALUE_ANTIALIAS_ON);
-            
-            if (tree.root != null) {
-                drawTree(g2d, tree.root, getWidth() / 2, 50, getWidth() / 4);
-            } else {
-                g2d.setFont(new Font("Arial", Font.BOLD, 16));
-                g2d.setColor(Color.GRAY);
-                g2d.drawString("Tree is empty", getWidth() / 2 - 60, getHeight() / 2);
+            if (tree.getRoot() != tree.getTNULL()) {
+                drawNode(g, tree.getRoot(), getWidth() / 2, 30, getWidth() / 4);
             }
         }
-        
-        private void drawTree(Graphics2D g2d, RedBlackTree<Integer>.Node node, 
-                             int x, int y, int xOffset) {
-            if (node == null) return;
+
+        private void drawNode(Graphics g, RBNode node, int x, int y, int xOffset) {
+            if (node == tree.getTNULL()) return;
+
+            g.setFont(new Font("Arial", Font.BOLD, 14));
             
-            // Draw connections
-            if (node.left != null) {
-                int childX = x - xOffset;
-                int childY = y + LEVEL_HEIGHT;
-                g2d.setColor(Color.BLACK);
-                g2d.setStroke(new BasicStroke(2));
-                g2d.draw(new Line2D.Double(x, y + NODE_RADIUS, childX, childY));
-                drawTree(g2d, node.left, childX, childY, xOffset / 2);
+            if (node.left != tree.getTNULL()) {
+                g.setColor(Color.BLACK);
+                g.drawLine(x, y, x - xOffset, y + 50);
+                drawNode(g, node.left, x - xOffset, y + 50, xOffset / 2);
             }
-            
-            if (node.right != null) {
-                int childX = x + xOffset;
-                int childY = y + LEVEL_HEIGHT;
-                g2d.setColor(Color.BLACK);
-                g2d.setStroke(new BasicStroke(2));
-                g2d.draw(new Line2D.Double(x, y + NODE_RADIUS, childX, childY));
-                drawTree(g2d, node.right, childX, childY, xOffset / 2);
+            if (node.right != tree.getTNULL()) {
+                g.setColor(Color.BLACK);
+                g.drawLine(x, y, x + xOffset, y + 50);
+                drawNode(g, node.right, x + xOffset, y + 50, xOffset / 2);
             }
-            
-            // Draw node
-            Color nodeColor = node.color == RedBlackTree.RED ? Color.RED : Color.BLACK;
-            Ellipse2D.Double circle = new Ellipse2D.Double(
-                x - NODE_RADIUS, y, 2 * NODE_RADIUS, 2 * NODE_RADIUS);
-            
-            // Highlight for search
-            if (highlightValue != null && node.data.equals(highlightValue)) {
-                g2d.setColor(Color.YELLOW);
-                g2d.fill(circle);
-                g2d.setColor(nodeColor);
-                g2d.setStroke(new BasicStroke(3));
-                g2d.draw(circle);
-                g2d.setStroke(new BasicStroke(1));
+
+            if (node.color == 1) {
+                g.setColor(Color.RED); 
             } else {
-                g2d.setColor(nodeColor);
-                g2d.fill(circle);
-                g2d.setColor(Color.BLACK);
-                g2d.draw(circle);
+                g.setColor(Color.BLACK); 
             }
             
-            // Draw text
-            g2d.setFont(new Font("Arial", Font.BOLD, 14));
-            FontMetrics fm = g2d.getFontMetrics();
-            String text = String.valueOf(node.data);
-            int textX = x - fm.stringWidth(text) / 2;
-            int textY = y + NODE_RADIUS + fm.getAscent() / 2 - 2;
-            
-            g2d.setColor(Color.WHITE);
-            g2d.drawString(text, textX, textY);
+            g.fillOval(x - 15, y - 15, 30, 30);
+            g.setColor(Color.WHITE);
+            String val = String.valueOf(node.data);
+            g.drawString(val, x - g.getFontMetrics().stringWidth(val) / 2, y + 5);
         }
     }
-    
-    // Red-Black Tree class
-    static class RedBlackTree<T extends Comparable<T>> {
-        private static final boolean RED = true;
-        private static final boolean BLACK = false;
-        
-        private class Node {
-            T data;
-            Node left, right, parent;
-            boolean color;
-            
-            Node(T data) {
-                this.data = data;
-                this.color = RED;
-            }
-        }
-        
-        private Node root;
-        
-        public RedBlackTree() {
-            root = null;
-        }
-        
-        public boolean contains(T data) {
-            return search(data) != null;
-        }
-        
-        public Node search(T data) {
-            return searchRecursive(root, data);
-        }
-        
-        private Node searchRecursive(Node node, T data) {
-            if (node == null || node.data.equals(data)) {
-                return node;
-            }
-            
-            if (data.compareTo(node.data) < 0) {
-                return searchRecursive(node.left, data);
-            } else {
-                return searchRecursive(node.right, data);
-            }
-        }
-        
-        public void insert(T data) {
-            Node newNode = new Node(data);
-            root = insertNode(root, newNode);
-            fixInsert(newNode);
-        }
-        
-        private Node insertNode(Node root, Node newNode) {
-            if (root == null) {
-                return newNode;
-            }
-            
-            if (newNode.data.compareTo(root.data) < 0) {
-                root.left = insertNode(root.left, newNode);
-                root.left.parent = root;
-            } else if (newNode.data.compareTo(root.data) > 0) {
-                root.right = insertNode(root.right, newNode);
-                root.right.parent = root;
-            }
-            
-            return root;
-        }
-        
-        private void fixInsert(Node node) {
-            Node parent = null;
-            Node grandParent = null;
-            
-            while (node != root && node.color == RED && node.parent.color == RED) {
-                parent = node.parent;
-                grandParent = parent.parent;
-                
-                if (parent == grandParent.left) {
-                    Node uncle = grandParent.right;
-                    
-                    if (uncle != null && uncle.color == RED) {
-                        grandParent.color = RED;
-                        parent.color = BLACK;
-                        uncle.color = BLACK;
-                        node = grandParent;
-                    } else {
-                        if (node == parent.right) {
-                            rotateLeft(parent);
-                            node = parent;
-                            parent = node.parent;
-                        }
-                        
-                        rotateRight(grandParent);
-                        boolean tempColor = parent.color;
-                        parent.color = grandParent.color;
-                        grandParent.color = tempColor;
-                        node = parent;
-                    }
-                } else {
-                    Node uncle = grandParent.left;
-                    
-                    if (uncle != null && uncle.color == RED) {
-                        grandParent.color = RED;
-                        parent.color = BLACK;
-                        uncle.color = BLACK;
-                        node = grandParent;
-                    } else {
-                        if (node == parent.left) {
-                            rotateRight(parent);
-                            node = parent;
-                            parent = node.parent;
-                        }
-                        
-                        rotateLeft(grandParent);
-                        boolean tempColor = parent.color;
-                        parent.color = grandParent.color;
-                        grandParent.color = tempColor;
-                        node = parent;
-                    }
-                }
-            }
-            
-            root.color = BLACK;
-        }
-        
-        private void rotateLeft(Node node) {
-            Node rightChild = node.right;
-            node.right = rightChild.left;
-            
-            if (node.right != null) {
-                node.right.parent = node;
-            }
-            
-            rightChild.parent = node.parent;
-            
-            if (node.parent == null) {
-                root = rightChild;
-            } else if (node == node.parent.left) {
-                node.parent.left = rightChild;
-            } else {
-                node.parent.right = rightChild;
-            }
-            
-            rightChild.left = node;
-            node.parent = rightChild;
-        }
-        
-        private void rotateRight(Node node) {
-            Node leftChild = node.left;
-            node.left = leftChild.right;
-            
-            if (node.left != null) {
-                node.left.parent = node;
-            }
-            
-            leftChild.parent = node.parent;
-            
-            if (node.parent == null) {
-                root = leftChild;
-            } else if (node == node.parent.left) {
-                node.parent.left = leftChild;
-            } else {
-                node.parent.right = leftChild;
-            }
-            
-            leftChild.right = node;
-            node.parent = leftChild;
-        }
-        
-        public void delete(T data) {
-            Node node = search(data);
-            if (node == null) return;
-            deleteNode(node);
-        }
-        
-        private void deleteNode(Node node) {
-            Node y = node;
-            Node x;
-            boolean yOriginalColor = y.color;
-            
-            if (node.left == null) {
-                x = node.right;
-                transplant(node, node.right);
-            } else if (node.right == null) {
-                x = node.left;
-                transplant(node, node.left);
-            } else {
-                y = minimum(node.right);
-                yOriginalColor = y.color;
-                x = y.right;
-                
-                if (y.parent == node) {
-                    if (x != null) x.parent = y;
-                } else {
-                    transplant(y, y.right);
-                    y.right = node.right;
-                    y.right.parent = y;
-                }
-                
-                transplant(node, y);
-                y.left = node.left;
-                y.left.parent = y;
-                y.color = node.color;
-            }
-            
-            if (yOriginalColor == BLACK && x != null) {
-                fixDelete(x);
-            }
-        }
-        
-        private void fixDelete(Node x) {
-            while (x != root && x.color == BLACK) {
-                if (x == x.parent.left) {
-                    Node w = x.parent.right;
-                    
-                    if (w.color == RED) {
-                        w.color = BLACK;
-                        x.parent.color = RED;
-                        rotateLeft(x.parent);
-                        w = x.parent.right;
-                    }
-                    
-                    if ((w.left == null || w.left.color == BLACK) && 
-                        (w.right == null || w.right.color == BLACK)) {
-                        w.color = RED;
-                        x = x.parent;
-                    } else {
-                        if (w.right == null || w.right.color == BLACK) {
-                            if (w.left != null) w.left.color = BLACK;
-                            w.color = RED;
-                            rotateRight(w);
-                            w = x.parent.right;
-                        }
-                        
-                        w.color = x.parent.color;
-                        x.parent.color = BLACK;
-                        if (w.right != null) w.right.color = BLACK;
-                        rotateLeft(x.parent);
-                        x = root;
-                    }
-                } else {
-                    Node w = x.parent.left;
-                    
-                    if (w.color == RED) {
-                        w.color = BLACK;
-                        x.parent.color = RED;
-                        rotateRight(x.parent);
-                        w = x.parent.left;
-                    }
-                    
-                    if ((w.right == null || w.right.color == BLACK) && 
-                        (w.left == null || w.left.color == BLACK)) {
-                        w.color = RED;
-                        x = x.parent;
-                    } else {
-                        if (w.left == null || w.left.color == BLACK) {
-                            if (w.right != null) w.right.color = BLACK;
-                            w.color = RED;
-                            rotateLeft(w);
-                            w = x.parent.left;
-                        }
-                        
-                        w.color = x.parent.color;
-                        x.parent.color = BLACK;
-                        if (w.left != null) w.left.color = BLACK;
-                        rotateRight(x.parent);
-                        x = root;
-                    }
-                }
-            }
-            x.color = BLACK;
-        }
-        
-        private void transplant(Node u, Node v) {
-            if (u.parent == null) {
-                root = v;
-            } else if (u == u.parent.left) {
-                u.parent.left = v;
-            } else {
-                u.parent.right = v;
-            }
-            
-            if (v != null) v.parent = u.parent;
-        }
-        
-        private Node minimum(Node node) {
-            while (node.left != null) node = node.left;
-            return node;
-        }
-        
-        public List<T> inorderTraversalList() {
-            List<T> result = new ArrayList<>();
-            inorderRecursive(root, result);
-            return result;
-        }
-        
-        private void inorderRecursive(Node node, List<T> result) {
-            if (node != null) {
-                inorderRecursive(node.left, result);
-                result.add(node.data);
-                inorderRecursive(node.right, result);
-            }
-        }
-        
-        public int getHeight() {
-            return getHeightRecursive(root);
-        }
-        
-        private int getHeightRecursive(Node node) {
-            if (node == null) return -1;
-            return 1 + Math.max(getHeightRecursive(node.left), 
-                               getHeightRecursive(node.right));
-        }
-        
-        public boolean isValidRedBlackTree() {
-            if (root == null) return true;
-            if (root.color != BLACK) return false;
-            return checkRedBlackProperties(root, 0, new int[]{-1});
-        }
-        
-        private boolean checkRedBlackProperties(Node node, int blackCount, 
-                                               int[] pathBlackCount) {
-            if (node == null) {
-                if (pathBlackCount[0] == -1) {
-                    pathBlackCount[0] = blackCount;
-                } else if (blackCount != pathBlackCount[0]) {
-                    return false;
-                }
-                return true;
-            }
-            
-            if (node.color == RED) {
-                if ((node.left != null && node.left.color == RED) ||
-                    (node.right != null && node.right.color == RED)) {
-                    return false;
-                }
-            }
-            
-            if (node.color == BLACK) blackCount++;
-            
-            return checkRedBlackProperties(node.left, blackCount, pathBlackCount) &&
-                   checkRedBlackProperties(node.right, blackCount, pathBlackCount);
-        }
-    }
-    
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            RedBlackTreeVisualization frame = new RedBlackTreeVisualization();
-            frame.setVisible(true);
+            new RBTVisualizer().setVisible(true);
         });
     }
 }
