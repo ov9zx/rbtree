@@ -1,8 +1,6 @@
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.util.ArrayList;
@@ -20,26 +18,26 @@ public class RedBlackTreeVisualization extends JFrame {
     }
     
     private void initializeUI() {
-        setTitle("Êðàñíî-×åðíîå Äåðåâî - Âèçóàëèçàöèÿ");
+        setTitle("Red-Black Tree - Visualization");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1000, 700);
         setLocationRelativeTo(null);
         
-        // Ãëàâíàÿ ïàíåëü
+        // Main panel
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
         
-        // Ïàíåëü äëÿ ðèñîâàíèÿ äåðåâà
+        // Tree drawing panel
         treePanel = new TreePanel();
         JScrollPane scrollPane = new JScrollPane(treePanel);
         scrollPane.setPreferredSize(new Dimension(800, 500));
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         
-        // Ïàíåëü óïðàâëåíèÿ
+        // Control panel
         JPanel controlPanel = createControlPanel();
         mainPanel.add(controlPanel, BorderLayout.SOUTH);
         
-        // Èíôîðìàöèîííàÿ ïàíåëü
+        // Information panel
         JPanel infoPanel = createInfoPanel();
         mainPanel.add(infoPanel, BorderLayout.EAST);
         
@@ -48,20 +46,20 @@ public class RedBlackTreeVisualization extends JFrame {
     
     private JPanel createControlPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        panel.setBorder(BorderFactory.createTitledBorder("Óïðàâëåíèå"));
+        panel.setBorder(BorderFactory.createTitledBorder("Controls"));
         
-        // Ïîëå ââîäà
+        // Input field
         inputField = new JTextField(10);
         inputField.setFont(new Font("Arial", Font.PLAIN, 14));
-        panel.add(new JLabel("Çíà÷åíèå:"));
+        panel.add(new JLabel("Value:"));
         panel.add(inputField);
         
-        // Êíîïêè îïåðàöèé
-        JButton insertButton = createStyledButton("Âñòàâèòü", new Color(46, 139, 87));
-        JButton deleteButton = createStyledButton("Óäàëèòü", new Color(220, 20, 60));
-        JButton searchButton = createStyledButton("Íàéòè", new Color(30, 144, 255));
-        JButton clearButton = createStyledButton("Î÷èñòèòü", new Color(128, 128, 128));
-        JButton randomButton = createStyledButton("Ñëó÷àéíûå", new Color(255, 140, 0));
+        // Operation buttons
+        JButton insertButton = createStyledButton("Insert", new Color(46, 139, 87));
+        JButton deleteButton = createStyledButton("Delete", new Color(220, 20, 60));
+        JButton searchButton = createStyledButton("Search", new Color(30, 144, 255));
+        JButton clearButton = createStyledButton("Clear", new Color(128, 128, 128));
+        JButton randomButton = createStyledButton("Random", new Color(255, 140, 0));
         
         insertButton.addActionListener(e -> performInsert());
         deleteButton.addActionListener(e -> performDelete());
@@ -81,7 +79,7 @@ public class RedBlackTreeVisualization extends JFrame {
     private JPanel createInfoPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setPreferredSize(new Dimension(250, 500));
-        panel.setBorder(BorderFactory.createTitledBorder("Èíôîðìàöèÿ"));
+        panel.setBorder(BorderFactory.createTitledBorder("Information"));
         
         infoArea = new JTextArea();
         infoArea.setEditable(false);
@@ -113,15 +111,15 @@ public class RedBlackTreeVisualization extends JFrame {
                 updateInfo();
                 treePanel.repaint();
                 inputField.setText("");
-                JOptionPane.showMessageDialog(this, "Çíà÷åíèå " + value + " âñòàâëåíî!", 
-                    "Óñïåõ", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Value " + value + " inserted!", 
+                    "Success", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(this, "Çíà÷åíèå " + value + " óæå ñóùåñòâóåò!", 
-                    "Ïðåäóïðåæäåíèå", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Value " + value + " already exists!", 
+                    "Warning", JOptionPane.WARNING_MESSAGE);
             }
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Ââåäèòå öåëîå ÷èñëî!", 
-                "Îøèáêà", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please enter an integer!", 
+                "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
     
@@ -133,15 +131,15 @@ public class RedBlackTreeVisualization extends JFrame {
                 updateInfo();
                 treePanel.repaint();
                 inputField.setText("");
-                JOptionPane.showMessageDialog(this, "Çíà÷åíèå " + value + " óäàëåíî!", 
-                    "Óñïåõ", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Value " + value + " deleted!", 
+                    "Success", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(this, "Çíà÷åíèå " + value + " íå íàéäåíî!", 
-                    "Îøèáêà", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Value " + value + " not found!", 
+                    "Error", JOptionPane.ERROR_MESSAGE);
             }
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Ââåäèòå öåëîå ÷èñëî!", 
-                "Îøèáêà", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please enter an integer!", 
+                "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
     
@@ -153,15 +151,15 @@ public class RedBlackTreeVisualization extends JFrame {
             treePanel.repaint();
             
             if (found) {
-                JOptionPane.showMessageDialog(this, "Çíà÷åíèå " + value + " íàéäåíî!", 
-                    "Ïîèñê", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Value " + value + " found!", 
+                    "Search", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(this, "Çíà÷åíèå " + value + " íå íàéäåíî!", 
-                    "Ïîèñê", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Value " + value + " not found!", 
+                    "Search", JOptionPane.INFORMATION_MESSAGE);
             }
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Ââåäèòå öåëîå ÷èñëî!", 
-                "Îøèáêà", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please enter an integer!", 
+                "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
     
@@ -185,10 +183,10 @@ public class RedBlackTreeVisualization extends JFrame {
     
     private void updateInfo() {
         List<Integer> values = tree.inorderTraversalList();
-        infoArea.setText("=== Èíôîðìàöèÿ î äåðåâå ===\n\n");
-        infoArea.append("Êîëè÷åñòâî óçëîâ: " + values.size() + "\n");
-        infoArea.append("Âàëèäíîå Ê×Ä: " + (tree.isValidRedBlackTree() ? "Äà" : "Íåò") + "\n\n");
-        infoArea.append("Ýëåìåíòû (inorder):\n");
+        infoArea.setText("=== Tree Information ===\n\n");
+        infoArea.append("Number of nodes: " + values.size() + "\n");
+        infoArea.append("Valid RBT: " + (tree.isValidRedBlackTree() ? "Yes" : "No") + "\n\n");
+        infoArea.append("Elements (inorder):\n");
         
         for (int i = 0; i < values.size(); i++) {
             infoArea.append(values.get(i) + " ");
@@ -197,10 +195,10 @@ public class RedBlackTreeVisualization extends JFrame {
             }
         }
         
-        infoArea.append("\n\nÂûñîòà äåðåâà: " + tree.getHeight());
+        infoArea.append("\n\nTree height: " + tree.getHeight());
     }
     
-    // Ïàíåëü äëÿ ðèñîâàíèÿ äåðåâà
+    // Tree drawing panel
     class TreePanel extends JPanel {
         public Integer highlightValue = null;
         private final int NODE_RADIUS = 25;
@@ -223,7 +221,7 @@ public class RedBlackTreeVisualization extends JFrame {
             } else {
                 g2d.setFont(new Font("Arial", Font.BOLD, 16));
                 g2d.setColor(Color.GRAY);
-                g2d.drawString("Äåðåâî ïóñòî", getWidth() / 2 - 60, getHeight() / 2);
+                g2d.drawString("Tree is empty", getWidth() / 2 - 60, getHeight() / 2);
             }
         }
         
@@ -231,7 +229,7 @@ public class RedBlackTreeVisualization extends JFrame {
                              int x, int y, int xOffset) {
             if (node == null) return;
             
-            // Ðèñóåì ñâÿçè
+            // Draw connections
             if (node.left != null) {
                 int childX = x - xOffset;
                 int childY = y + LEVEL_HEIGHT;
@@ -250,12 +248,12 @@ public class RedBlackTreeVisualization extends JFrame {
                 drawTree(g2d, node.right, childX, childY, xOffset / 2);
             }
             
-            // Ðèñóåì óçåë
+            // Draw node
             Color nodeColor = node.color == RedBlackTree.RED ? Color.RED : Color.BLACK;
             Ellipse2D.Double circle = new Ellipse2D.Double(
                 x - NODE_RADIUS, y, 2 * NODE_RADIUS, 2 * NODE_RADIUS);
             
-            // Ïîäñâåòêà ïðè ïîèñêå
+            // Highlight for search
             if (highlightValue != null && node.data.equals(highlightValue)) {
                 g2d.setColor(Color.YELLOW);
                 g2d.fill(circle);
@@ -270,19 +268,19 @@ public class RedBlackTreeVisualization extends JFrame {
                 g2d.draw(circle);
             }
             
-            // Ðèñóåì òåêñò
+            // Draw text
             g2d.setFont(new Font("Arial", Font.BOLD, 14));
             FontMetrics fm = g2d.getFontMetrics();
             String text = String.valueOf(node.data);
             int textX = x - fm.stringWidth(text) / 2;
             int textY = y + NODE_RADIUS + fm.getAscent() / 2 - 2;
             
-            g2d.setColor(node.color == RedBlackTree.RED ? Color.WHITE : Color.WHITE);
+            g2d.setColor(Color.WHITE);
             g2d.drawString(text, textX, textY);
         }
     }
     
-    // Êëàññ Êðàñíî-×åðíîãî äåðåâà
+    // Red-Black Tree class
     static class RedBlackTree<T extends Comparable<T>> {
         private static final boolean RED = true;
         private static final boolean BLACK = false;
